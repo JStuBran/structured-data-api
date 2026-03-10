@@ -1,0 +1,89 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Structured Data API",
+  "name_for_model": "structured_data_api",
+  "description_for_human": "Extract structured JSON from any text or URL using GPT-4o-mini. Provide a JSON Schema and get back clean, structured data.",
+  "description_for_model": "Use this tool to extract structured JSON data from unstructured text or web URLs using GPT-4o-mini via OpenRouter. Provide raw text or a URL along with a JSON Schema defining the output structure. The API will return a JSON object conforming to your schema. Requires x402 USDC payment ($0.10) on Base mainnet per extraction. Max input: 20,000 characters.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://structured-data-api.up.railway.app/openapi.json"
+  },
+  "tools": [
+    {
+      "name": "extract_structured_data",
+      "description": "Extract structured JSON from unstructured text or a URL using GPT-4o-mini. Provide either 'url' or 'text', plus a JSON Schema describing the output. Returns a JSON object conforming to your schema. Costs $0.10 USDC via x402 on Base mainnet.",
+      "endpoint": {
+        "method": "POST",
+        "path": "/api/extract",
+        "base_url": "https://structured-data-api.up.railway.app"
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to fetch and extract structured data from. The API will scrape and clean the page content automatically."
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 20000,
+            "description": "Raw text to extract structured data from (max 20,000 characters). Provide either 'url' or 'text', not both."
+          },
+          "schema": {
+            "type": "object",
+            "description": "JSON Schema defining the output structure. The LLM will return a JSON object conforming to this schema.",
+            "examples": [
+              {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "author": { "type": "string" },
+                  "summary": { "type": "string" },
+                  "published_date": { "type": "string" }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "company": { "type": "string" },
+                  "revenue": { "type": "string" },
+                  "quarter": { "type": "string" },
+                  "key_metrics": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            ]
+          }
+        },
+        "required": ["schema"],
+        "oneOf": [
+          { "required": ["url"] },
+          { "required": ["text"] }
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Extracted data conforming to the provided JSON Schema"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "model": { "type": "string" },
+              "input_chars": { "type": "integer" },
+              "processing_time_ms": { "type": "number" },
+              "source": { "type": "string", "enum": ["url", "text"] }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "contact_email": "",
+  "legal_info_url": "https://structured-data-api.up.railway.app/health"
+}

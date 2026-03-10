@@ -120,3 +120,96 @@ Set environment variables:
 - Max input: **20,000 characters**
 - Max output tokens: **2,048**
 - Model: **openai/gpt-4o-mini** via OpenRouter
+
+---
+
+## 🛠 MCP Integration
+
+The Structured Data API is **MCP-compatible** — discoverable and callable by Claude, Cursor, and any MCP-enabled AI client via an MCP-to-REST bridge.
+
+An `mcp.json` file at the root of this repo defines the `extract_structured_data` tool schema. MCP hosts use this for automatic tool discovery.
+
+### Add to Claude Desktop
+
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+
+```json
+{
+  "mcpServers": {
+    "structured-data-api": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://structured-data-api.up.railway.app/mcp"
+      ]
+    }
+  }
+}
+```
+
+### Add to Cursor
+
+In Cursor settings → **MCP Tools** → **Add Tool**:
+
+```json
+{
+  "name": "structured-data-api",
+  "url": "https://structured-data-api.up.railway.app",
+  "schema": "https://structured-data-api.up.railway.app/mcp.json"
+}
+```
+
+### Available MCP Tools
+
+| Tool | Description | Cost |
+|---|---|---|
+| `extract_structured_data` | Extract structured JSON from any text or URL using GPT-4o-mini | $0.10 USDC |
+
+### Example Agent Usage
+
+Once configured, Claude or any MCP client can call:
+
+```
+Use structured-data-api to extract the following fields from
+https://example.com/earnings-report:
+- company (string)
+- revenue (string)
+- quarter (string)
+- key_highlights (array of strings)
+```
+
+The agent will automatically call `POST /api/extract` with your schema and return the structured result.
+
+### Example Schema Patterns
+
+**Article extraction:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "title": { "type": "string" },
+    "author": { "type": "string" },
+    "published_date": { "type": "string" },
+    "summary": { "type": "string" },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  }
+}
+```
+
+**Product listing:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "product_name": { "type": "string" },
+    "price": { "type": "string" },
+    "availability": { "type": "string" },
+    "features": { "type": "array", "items": { "type": "string" } }
+  }
+}
+```
+
+### x402 Payment Note
+
+Production calls require an `X-Payment` header with a valid USDC payment proof on Base mainnet ($0.10 per extraction). For development/testing, deploy your own instance with `PAYMENT_REQUIRED=false`.

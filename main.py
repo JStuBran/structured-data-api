@@ -224,6 +224,40 @@ async def health():
     return {"status": "ok", "version": VERSION}
 
 
+@app.get("/mcp")
+@app.get("/mcp.json")
+async def mcp_manifest():
+    """MCP (Model Context Protocol) manifest — enables agentic tool discovery by Claude, Cursor, etc."""
+    import json
+    from pathlib import Path
+    from fastapi.responses import JSONResponse
+
+    mcp_path = Path(__file__).parent / "mcp.json"
+    if mcp_path.exists():
+        return JSONResponse(content=json.loads(mcp_path.read_text()))
+    # Inline fallback manifest
+    return JSONResponse(content={
+        "schema_version": "v1",
+        "name_for_model": "structured_data_api",
+        "description_for_model": (
+            "Extract structured JSON from unstructured text or a URL using GPT-4o-mini. "
+            "Provide a JSON Schema and get back a clean, structured JSON object. "
+            "Costs $0.10 USDC via x402 on Base mainnet. Max input: 20,000 characters."
+        ),
+        "api": {
+            "type": "openapi",
+            "url": f"{SERVICE_URL}/openapi.json",
+        },
+        "tools": [
+            {
+                "name": "extract_structured_data",
+                "description": "Extract structured JSON from text or a URL using GPT-4o-mini. Provide a JSON Schema to define the output.",
+                "endpoint": {"method": "POST", "path": "/api/extract", "base_url": SERVICE_URL},
+            },
+        ],
+    })
+
+
 @app.post("/api/extract", response_model=ExtractResponse)
 async def extract(body: ExtractRequest):
     start = time.time()
